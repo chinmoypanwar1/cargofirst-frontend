@@ -12,8 +12,8 @@ const Dashboard = () => {
   const [activeView, setActiveView] = useState(dashboardViews.PROFILE);
   const [user, setUser] = useState(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -24,18 +24,14 @@ const Dashboard = () => {
         setIsAuthenticated(true);
       } catch (err) {
         console.error(err);
-        alert("You are not supposed to be here");
-        navigate("/"); // redirect
+        setError("You are not supposed to be here");
+        setIsAuthenticated(false);
       } finally {
         setLoading(false);
       }
     };
     fetchUserData();
-  }, [navigate]);
-
-  if (loading) return <div>Loading...</div>;
-  if (!isAuthenticated) return null;
-
+  }, []);
 
   const handleLogout = async () => {
     try {
@@ -52,7 +48,13 @@ const Dashboard = () => {
       case dashboardViews.JOB_POSTED:
         return <JobPostingView />;
       case dashboardViews.PROFILE:
-        return <ProfileSettings fullName={user.fullname} email={user.email} userId={user._id} />;
+        return (
+          <ProfileSettings
+            fullName={user?.fullname}
+            email={user?.email}
+            userId={user?._id}
+          />
+        );
       case dashboardViews.CUSTOMER_ANALYSIS:
         return <CustomerAnalysis />;
       default:
@@ -60,20 +62,22 @@ const Dashboard = () => {
     }
   };
 
-  if (!isAuthenticated) return null;
+  if (loading) return <div>Loading...</div>;
 
   return (
-    <div className="flex w-full h-screen"> {/* full viewport height */}
+    <div className="flex w-full h-screen">
       <Sidebar
         setActiveView={setActiveView}
         activeView={activeView}
         onLogout={handleLogout}
       />
       <main className="flex-1 p-6 bg-gray-100 overflow-y-auto">
-        {renderContent()}
+        {error && (
+          <div className="mb-4 text-red-600 font-semibold">{error}</div>
+        )}
+        {isAuthenticated ? renderContent() : <div>Access denied.</div>}
       </main>
     </div>
-
   );
 };
 
